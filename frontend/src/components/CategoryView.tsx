@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, Card, CardContent, Button, CircularProgress } from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Card, CardContent, Button, CircularProgress, ListItemIcon } from '@mui/material';
+import { ChatBubbleOutline } from '@mui/icons-material';
 import { backend } from '../../declarations/backend';
 
 interface Thread {
@@ -59,6 +60,9 @@ function CategoryView() {
                 to={`/thread/${thread.id}`}
                 button
               >
+                <ListItemIcon>
+                  <ChatBubbleOutline />
+                </ListItemIcon>
                 <ListItemText
                   primary={thread.title}
                   secondary={`By ${thread.author} on ${new Date(Number(thread.createdAt) / 1000000).toLocaleString()}`}

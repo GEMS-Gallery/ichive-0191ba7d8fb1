@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, Card, CardContent, CircularProgress } from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Card, CardContent, CircularProgress, ListItemIcon } from '@mui/material';
+import { ChatBubbleOutline, Memory, SportsBasketball } from '@mui/icons-material';
 import { backend } from '../../declarations/backend';
 
 interface Category {
@@ -31,6 +32,19 @@ function Home() {
     return <CircularProgress />;
   }
 
+  const getCategoryIcon = (categoryName: string) => {
+    switch (categoryName) {
+      case 'General Discussion':
+        return <ChatBubbleOutline />;
+      case 'Technology':
+        return <Memory />;
+      case 'Sports':
+        return <SportsBasketball />;
+      default:
+        return <ChatBubbleOutline />;
+    }
+  };
+
   return (
     <div>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -49,6 +63,9 @@ function Home() {
                 to={`/category/${category.id}`}
                 button
               >
+                <ListItemIcon>
+                  {getCategoryIcon(category.name)}
+                </ListItemIcon>
                 <ListItemText
                   primary={category.name}
                   secondary={category.description || 'No description'}
