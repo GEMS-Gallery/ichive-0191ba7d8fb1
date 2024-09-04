@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Typography, Card, CardContent, Divider, TextField, Button, CircularProgress } from '@mui/material';
+import { Typography, Card, CardContent, Divider, TextField, Button, CircularProgress, Snackbar } from '@mui/material';
 import { backend } from '../../declarations/backend';
+import { retryAsync } from '../utils/retryAsync';
 
 interface Post {
   id: bigint;
@@ -16,16 +17,18 @@ function ThreadView() {
   const [newPost, setNewPost] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPosts = async () => {
       if (id) {
         try {
-          const result = await backend.getPosts(BigInt(id));
+          const result = await retryAsync(() => backend.getPosts(BigInt(id)), 3);
           setPosts(result);
           setLoading(false);
         } catch (error) {
           console.error('Failed to fetch posts:', error);
+          setError('Failed to load posts. Please try again.');
           setLoading(false);
         }
       }
@@ -38,7 +41,7 @@ function ThreadView() {
     if (id && newPost.trim()) {
       setSubmitting(true);
       try {
-        const result = await backend.createPost(BigInt(id), newPost, 'Anonymous');
+        const result = await retryAsync(() => backend.createPost(BigInt(id), newPost, 'Anonymous'), 3);
         if ('ok' in result) {
           const newPostObj: Post = {
             id: result.ok,
@@ -49,10 +52,11 @@ function ThreadView() {
           setPosts([...posts, newPostObj]);
           setNewPost('');
         } else {
-          console.error('Failed to create post:', result.err);
+          setError('Failed to create post. Please try again.');
         }
       } catch (error) {
         console.error('Error creating post:', error);
+        setError('Failed to create post. Please try again.');
       }
       setSubmitting(false);
     }
@@ -98,6 +102,12 @@ function ThreadView() {
           {submitting ? <CircularProgress size={24} /> : 'Post Reply'}
         </Button>
       </form>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        message={error}
+      />
     </div>
   );
 }

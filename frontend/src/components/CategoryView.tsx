@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, Card, CardContent, Button, CircularProgress, ListItemIcon } from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Card, CardContent, Button, CircularProgress, ListItemIcon, Snackbar } from '@mui/material';
 import { ChatBubbleOutline } from '@mui/icons-material';
 import { backend } from '../../declarations/backend';
+import { retryAsync } from '../utils/retryAsync';
 
 interface Thread {
   id: bigint;
@@ -15,16 +16,18 @@ function CategoryView() {
   const { id } = useParams<{ id: string }>();
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchThreads = async () => {
       if (id) {
         try {
-          const result = await backend.getThreads(BigInt(id));
+          const result = await retryAsync(() => backend.getThreads(BigInt(id)), 3);
           setThreads(result);
           setLoading(false);
         } catch (error) {
           console.error('Failed to fetch threads:', error);
+          setError('Failed to load threads. Please try again.');
           setLoading(false);
         }
       }
@@ -72,6 +75,12 @@ function CategoryView() {
           </List>
         </CardContent>
       </Card>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        message={error}
+      />
     </div>
   );
 }

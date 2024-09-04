@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Typography, List, ListItem, ListItemText, Card, CardContent, CircularProgress, ListItemIcon } from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Card, CardContent, CircularProgress, ListItemIcon, Snackbar } from '@mui/material';
 import { ChatBubbleOutline, Memory, SportsBasketball } from '@mui/icons-material';
 import { backend } from '../../declarations/backend';
+import { retryAsync } from '../utils/retryAsync';
 
 interface Category {
   id: bigint;
@@ -13,15 +14,17 @@ interface Category {
 function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const result = await backend.getCategories();
+        const result = await retryAsync(() => backend.getCategories(), 3);
         setCategories(result);
         setLoading(false);
       } catch (error) {
         console.error('Failed to fetch categories:', error);
+        setError('Failed to load categories. Please try again.');
         setLoading(false);
       }
     };
@@ -75,6 +78,12 @@ function Home() {
           </List>
         </CardContent>
       </Card>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        message={error}
+      />
     </div>
   );
 }

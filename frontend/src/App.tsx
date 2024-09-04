@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Routes, Route, Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Container, CircularProgress } from '@mui/material';
+import { AppBar, Toolbar, Typography, Container, CircularProgress, Snackbar } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import Home from './components/Home';
@@ -8,6 +8,7 @@ import CategoryView from './components/CategoryView';
 import ThreadView from './components/ThreadView';
 import NewThreadForm from './components/NewThreadForm';
 import { backend } from '../declarations/backend';
+import { retryAsync } from './utils/retryAsync';
 
 const theme = createTheme({
   palette: {
@@ -25,14 +26,16 @@ const theme = createTheme({
 
 function App() {
   const [initialized, setInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const init = async () => {
       try {
-        await backend.initialize();
+        await retryAsync(() => backend.initialize(), 3);
         setInitialized(true);
       } catch (error) {
         console.error('Failed to initialize:', error);
+        setError('Failed to initialize the application. Please try again.');
       }
     };
     init();
@@ -64,6 +67,12 @@ function App() {
           <Route path="/new-thread" element={<NewThreadForm />} />
         </Routes>
       </Container>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        message={error}
+      />
     </ThemeProvider>
   );
 }

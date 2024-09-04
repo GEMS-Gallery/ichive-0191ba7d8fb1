@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Typography, TextField, Button, Card, CardContent, CircularProgress } from '@mui/material';
+import { Typography, TextField, Button, Card, CardContent, CircularProgress, Snackbar } from '@mui/material';
 import { backend } from '../../declarations/backend';
+import { retryAsync } from '../utils/retryAsync';
 
 function NewThreadForm() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -17,14 +19,15 @@ function NewThreadForm() {
     if (categoryId && title.trim() && content.trim()) {
       setSubmitting(true);
       try {
-        const result = await backend.createThread(BigInt(categoryId), title, content, 'Anonymous');
+        const result = await retryAsync(() => backend.createThread(BigInt(categoryId), title, content, 'Anonymous'), 3);
         if ('ok' in result) {
           navigate(`/thread/${result.ok}`);
         } else {
-          console.error('Failed to create thread:', result.err);
+          setError('Failed to create thread. Please try again.');
         }
       } catch (error) {
         console.error('Error creating thread:', error);
+        setError('Failed to create thread. Please try again.');
       }
       setSubmitting(false);
     }
@@ -66,6 +69,12 @@ function NewThreadForm() {
           </Button>
         </form>
       </CardContent>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+        message={error}
+      />
     </Card>
   );
 }
