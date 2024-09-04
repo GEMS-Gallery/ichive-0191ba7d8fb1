@@ -1,0 +1,45 @@
+type Time = int;
+type ThreadId = nat;
+type Thread = 
+ record {
+   author: text;
+   categoryId: CategoryId;
+   createdAt: Time;
+   id: ThreadId;
+   lastPost: opt Post;
+   title: text;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: PostId;
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: ThreadId;
+ };
+type PostId = nat;
+type Post = 
+ record {
+   author: text;
+   content: text;
+   createdAt: Time;
+   id: PostId;
+   threadId: ThreadId;
+ };
+type CategoryId = nat;
+type Category = 
+ record {
+   description: opt text;
+   id: CategoryId;
+   name: text;
+ };
+service : {
+  createPost: (ThreadId, text, text) -> (Result_1);
+  createThread: (CategoryId, text, text, text) -> (Result);
+  getCategories: () -> (vec Category) query;
+  getPosts: (ThreadId) -> (vec Post) query;
+  getThreads: (CategoryId) -> (vec Thread) query;
+  initialize: () -> ();
+}
